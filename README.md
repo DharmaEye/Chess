@@ -1,2 +1,2 @@
-# Chess Created by George Machaidze
-Hello everyone, this is my chess project which is created by me
+# Chess
+Hello, It's chess game project based on canvas and native javascript
