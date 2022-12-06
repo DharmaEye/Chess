@@ -1,6 +1,6 @@
 import { Component, OnInit } from "@angular/core";
-import { GameData } from "src/app/game/chess/game-data";
-import { GamePieceData } from "src/app/game/chess/game-piece-data";
+import { GameData } from "src/app/data/game-data";
+import { GamePieceData } from "src/app/data/game-piece-data";
 
 @Component({
   selector: "app-canvas-main",
