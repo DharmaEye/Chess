@@ -5,6 +5,7 @@ export interface GamePieceData {
     height?: number,
     img: string,
     character?: string,
+    name?:string,
     isFirstMove?: boolean,
     zIndex?: number,
     isEnemy: boolean

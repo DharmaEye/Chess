@@ -35,17 +35,97 @@ export class CanvasMainComponent implements OnInit {
 
   drawZone: any = [];
   canSetPosition: any = [];
+  subscription: any;
+  checkRefresh: boolean = false;
+
+  loadedImages: any = [];
+  imageCount:any = 0;
+  IMG_SOURCE_FOLDER:string = "assets/img";
+  IMG_PRELOAD_TIME:any = 100;
 
   getContext(c: any) {
     this.context = c.ctx;
     this.canvas = c.canvas;
   }
 
+  img_sources = {
+    bb: this.IMG_SOURCE_FOLDER + "/bb.png",
+    bk: this.IMG_SOURCE_FOLDER + "/bk.png",
+    bn: this.IMG_SOURCE_FOLDER + "/bn.png",
+    bp: this.IMG_SOURCE_FOLDER + "/bp.png",
+    bq: this.IMG_SOURCE_FOLDER + "/bq.png",
+    br: this.IMG_SOURCE_FOLDER + "/br.png",
+    wb: this.IMG_SOURCE_FOLDER + "/wb.png",
+    wk: this.IMG_SOURCE_FOLDER + "/wk.png",
+    wn: this.IMG_SOURCE_FOLDER + "/wn.png",
+    wp: this.IMG_SOURCE_FOLDER + "/wp.png",
+    wq: this.IMG_SOURCE_FOLDER + "/wq.png",
+    wr: this.IMG_SOURCE_FOLDER + "/wr.png",
+  };
+
   constructor() {}
 
-  ngOnInit(): void {}
+  async ngOnInit() {
+    this.preLoadImages(this.img_sources);
+  }
   ngAfterViewInit() {
     this.initGame();
+  }
+
+  preLoadImages(sources: any): any {
+    let count = 0;
+    for (let src in sources) {
+      ((index) => {
+        count++;
+        setTimeout(() => {
+          let newImage = new Image();
+          newImage.src = this.IMG_SOURCE_FOLDER + "/" + src + ".png";
+          newImage.onload = () => {
+              this.imageCount++;
+              this.loadedImages[src] = {name:src,image:newImage};
+              console.log('image ' + src + '.png loaded.');
+          };
+        }, this.IMG_PRELOAD_TIME * count);
+      })(src);
+    }
+  }
+
+  startGame(): void {
+    var gameProcess = () => {
+      if(this.imageCount == Object.keys(this.img_sources).length){
+        this.drawTable();
+        this.setEntryPositions(this.gameData.whitePos, this.gameData.blackPos);
+      }
+      window.requestAnimationFrame(gameProcess);
+    };
+    window.requestAnimationFrame(gameProcess);
+  }
+
+  setEntryPositions(self: any[], enemy: string | any[]): void {
+    
+    for (let i = 0; i < enemy.length; i++) {
+      let item = enemy[i];
+      this.context.drawImage(
+        this.loadedImages[item.name].image, 
+        item.x, 
+        item.y, 
+        item.width, 
+        item.height);
+    }
+
+    const selfData = self.sort(function (a, b) {
+      return a.zIndex - b.zIndex;
+    });
+
+    for (let i = 0; i < selfData.length; i++) {
+      let item = selfData[i];
+      this.context.drawImage(
+        this.loadedImages[item.name].image, 
+        item.x, 
+        item.y, 
+        item.width, 
+        item.height);
+    }
   }
 
   mouseClick(): void {
@@ -345,7 +425,6 @@ export class CanvasMainComponent implements OnInit {
               ];
             }
           }
-
           this.drawZone = pos;
           this.canSetPosition = pos;
 
@@ -913,15 +992,6 @@ export class CanvasMainComponent implements OnInit {
     return obj;
   }
 
-  startGame(): void {
-    var gameProcess = () => {
-      this.drawTable();
-      this.setEntryPositions(this.gameData.whitePos, this.gameData.blackPos);
-      window.requestAnimationFrame(gameProcess);
-    };
-    window.requestAnimationFrame(gameProcess);
-  }
-
   drawTable(): void {
     let currentColorIndex = 0;
 
@@ -967,47 +1037,6 @@ export class CanvasMainComponent implements OnInit {
     }
   }
 
-  setEntryPositions(self: any[], enemy: string | any[]): void {
-    for (let i = 0; i < enemy.length; i++) {
-      let item = enemy[i];
-      let image = new Image();
-      image.src = item.img;
-
-      const loadImage = () => {
-        this.context.drawImage(image, item.x, item.y, item.width, item.height);
-      };
-      if (image.complete) {
-        loadImage();
-      } else {
-        image.onload = () => {
-          loadImage();
-        };
-      }
-    }
-
-    const selfData = self.sort(function (a, b) {
-      return a.zIndex - b.zIndex;
-    });
-
-    for (let i = 0; i < selfData.length; i++) {
-      let item = selfData[i];
-
-      let image = new Image();
-      image.src = item.img;
-
-      const loadImage = () => {
-        this.context.drawImage(image, item.x, item.y, item.width, item.height);
-      };
-      if (image.complete) {
-        loadImage();
-      } else {
-        image.onload = () => {
-          loadImage();
-        };
-      }
-    }
-  }
-
   setBlackEntryData(): any {
     this.gamePieceData = [];
 
@@ -1029,8 +1058,9 @@ export class CanvasMainComponent implements OnInit {
             y: 0,
             width: width,
             height: height,
-            img: "assets/img/" + current.img,
+            img: this.IMG_SOURCE_FOLDER + "/" + current.img,
             character: current.img.substr(1, 1),
+            name: 'b' + current.img.substr(1,1),
             zIndex: 1,
             isEnemy: true,
           });
@@ -1045,8 +1075,9 @@ export class CanvasMainComponent implements OnInit {
           y: 0,
           width: width,
           height: height,
-          img: "assets/img/" + current.img,
+          img: this.IMG_SOURCE_FOLDER + "/" + current.img,
           character: current.img.substr(1, 1),
+          name: 'b' + current.img.substr(1,1),
           zIndex: 1,
           isEnemy: true,
         });
@@ -1062,8 +1093,9 @@ export class CanvasMainComponent implements OnInit {
         y: 1 * this.tableWidth,
         width: width,
         height: height,
-        img: "assets/img/" + colorPawn + ".png",
+        img: this.IMG_SOURCE_FOLDER + "/" + colorPawn + ".png",
         character: colorPawn.substr(1, 1),
+        name: 'b' + colorPawn.substr(1,1),
         isFirstMove: true,
         zIndex: 1,
         isEnemy: true,
@@ -1093,8 +1125,9 @@ export class CanvasMainComponent implements OnInit {
             y: (8 - 1) * this.tableWidth,
             width: width,
             height: height,
-            img: "assets/img/" + current.img,
+            img: this.IMG_SOURCE_FOLDER + "/" + current.img,
             character: current.img.substr(1, 1),
+            name:'w' + current.img.substr(1,1),
             zIndex: 1,
             isEnemy: false,
           });
@@ -1109,8 +1142,9 @@ export class CanvasMainComponent implements OnInit {
           y: (8 - 1) * this.tableWidth,
           width: width,
           height: height,
-          img: "assets/img/" + current.img,
+          img: this.IMG_SOURCE_FOLDER + "/" + current.img,
           character: current.img.substr(1, 1),
+          name:'w' + current.img.substr(1,1),
           zIndex: 1,
           isEnemy: false,
         });
@@ -1126,8 +1160,9 @@ export class CanvasMainComponent implements OnInit {
         y: 6 * this.tableWidth,
         width: width,
         height: height,
-        img: "assets/img/" + colorPawn + ".png",
+        img: this.IMG_SOURCE_FOLDER + "/" + colorPawn + ".png",
         character: colorPawn.substr(1, 1),
+        name: 'w' + colorPawn.substr(1,1),
         isFirstMove: true,
         zIndex: 1,
         isEnemy: false,
